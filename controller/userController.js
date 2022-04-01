@@ -1,16 +1,13 @@
 const { User } = require('../models');
 
 module.exports = {
-    getAllUsers: async (req, res) => {
-        try {
-            const users = await User.find({});
-            res.json(users);
-        } catch (e) {
-            res.json(e);
-        }
-    },
-    getUserById({ params }, res) {
-		User.findOne({ _id: params.id })
+    getAllUsers(req, res) {
+		User.find()
+		.then((users) => res.json(users))
+		.catch((err) => res.status(500).json(err));
+	},
+    getUserById(req, res) {
+		User.findOne({ _id: req.params.id })
 			.populate({
 				path: "thoughts",
 				select: "-__v",
@@ -32,26 +29,16 @@ module.exports = {
 				res.status(400).json(err);
 			});
 	},
-    createUser: async (req, res) => {
-        const {
-            username,
-            email,
-        } = req.body;
-        try {
-            const newUser = await User.create({
-                username,
-                email,
-            });
-            res.json(newUser);
-        } catch (e) {
-            res.json(e);
-        }
-    },
-    updateUserById({ params, body }, res) {
+    createUser(req, res) {
+		User.create(req.body)
+		.then((dbUserData) => res.json(dbUserData))
+		.catch((err) => res.status(500).json(err));
+	},
+    updateUserById(req, res) {
 		User.findOneAndUpdate({
-            _id: params.id
+            _id: req.params.id
         },
-            body,
+            req.body,
             {
 			new: true,
 			runValidators: true,
@@ -68,8 +55,8 @@ module.exports = {
 				res.status(400).json(err);
 			});
 	},
-    deleteUserById({ params }, res) {
-		User.findOneAndDelete({ _id: params.id })
+    deleteUserById(req, res) {
+		User.findOneAndDelete({ _id: req.params.id })
 			.then((dbUserData) => {
 				if (!dbUserData) {
 					res.status(404).json({ message: "No user found with this id" });
@@ -82,8 +69,8 @@ module.exports = {
 				res.status(400).json(err);
 			});
 	},
-    addNewFriend({ params }, res) {
-		User.findOne({ _id: params.friendId })
+    addNewFriend(req, res) {
+		User.findOne({ _id: req.params.friendId })
 			.then((friendData) => {
 				if (!friendData) {
 					res
@@ -92,7 +79,7 @@ module.exports = {
 					return;
 				}
 				return User.findOneAndUpdate(
-					{ _id: params.userId },
+					{ _id: req.params.userId },
 					{ $push: { friends: friendData } },
 					{ new: true }
 				);
@@ -111,10 +98,10 @@ module.exports = {
 				res.status(400).json(err);
 			});
 	},
-    deleteFriend({ params }, res) {
+    deleteFriend(req, res) {
 		User.findOneAndUpdate(
-			{ _id: params.userId },
-			{ $pull: { friends: params.friendId } },
+			{ _id: req.params.userId },
+			{ $pull: { friends: req.params.friendId } },
 			{ new: true }
 		)
 			.then((dbUserData) => {
