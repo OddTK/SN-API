@@ -7,7 +7,7 @@ module.exports = {
             .catch((err) => res.status(500).json(err));
     },
     getThoughtById(req, res) {
-		Thought.findOne({ _id: req.params.id })
+		Thought.findOne({ _id: req.params.thoughId })
 			.select("-__v")
 			.then((dbThoughtData) => {
 				if (!dbThoughtData) {
@@ -44,7 +44,7 @@ module.exports = {
 	},
     updateThoughtById(req, res) {
         Thought.findOneAndUpdate(
-            { _id: req.params.id },
+            { _id: req.params.thoughId },
             req.body,
             {new: true,
             runValidators: true,
