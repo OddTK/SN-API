@@ -2,10 +2,20 @@ const { isEmail } = require("validator");
 const { User } = require("../models");
 
 module.exports = {
-  getAllUsers(req, res) {
-    User.find()
-      .then((users) => res.json(users))
-      .catch((err) => res.status(500).json(err));
+  getAllUsers: async (req, res) => {
+    try {
+      const users = await User.find()
+        .populate({
+          path: "thoughts",
+          select: "-__v",
+        })
+        .select("-__v")
+        .sort({ _id: -1 });
+
+      res.json(users);
+    } catch (error) {
+      res.json(error);
+    }
   },
   getUserById(req, res) {
     const { userId } = req.params;
