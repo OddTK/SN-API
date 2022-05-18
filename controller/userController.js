@@ -11,21 +11,22 @@ module.exports = {
         })
         .select("-__v")
         .sort({ _id: -1 });
-
       res.json(users);
     } catch (error) {
       res.json(error);
     }
   },
-  getUserById(req, res) {
+
+  getUserById: async (req, res) => {
     const { userId } = req.params;
     try {
-      const user = User.findById(userId);
+      const user = await User.findById(userId);
       res.json(user);
     } catch (error) {
       res.json(error);
     }
   },
+
   createUser: async (req, res) => {
     const { username, email } = req.body;
     if (!isEmail(email)) {
@@ -43,6 +44,7 @@ module.exports = {
       res.json(error);
     }
   },
+
   updateUserById: async (req, res) => {
     const { userId } = req.params;
     try {
@@ -59,6 +61,7 @@ module.exports = {
       res.json(error);
     }
   },
+
   deleteUserById: async (req, res) => {
     const { userId } = req.params;
 
@@ -72,49 +75,72 @@ module.exports = {
       res.json(error);
     }
   },
-  addNewFriend(req, res) {
-    User.findOne({ _id: req.params.userId })
-      .then((friendData) => {
-        if (!friendData) {
-          res
-            .status(404)
-            .json({ message: "No user/friend found with this id" });
-          return;
-        }
-        return User.findOneAndUpdate(
-          { _id: req.params.userId },
-          { $push: { friends: friendData } },
-          { new: true }
-        );
-      })
-      .then((dbUserData) => {
-        if (!dbUserData) {
-          res.status(404).json({ message: "No user/user found with this id" });
-          return;
-        }
-        res.status(200).json(dbUserData);
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json(err);
+
+  addNewFriend: async (req, res) => {
+    const { userId, friendId } = req.params;
+    try {
+      const user1 = await User.findOneAndUpdate(
+        { _id: userId },
+        { $push: { friends: friendId } },
+        { new: true, runValidators: true }
+      ).populate({
+        path: "friends",
+        select: "-__v",
       });
+      const user2 = await User.findOneAndUpdate(
+        { _id: friendId },
+        { $push: { friends: userId } },
+        { new: true, runValidators: true }
+      )
+        .populate({
+          path: "friends",
+          select: "-__v",
+        })
+
+        .select("-__v")
+        .then((userData) => {
+          if (!userData) {
+            res.status(404).json({ message: "No User found with this id!" });
+            return;
+          }
+          res.json(userData);
+        });
+    } catch (error) {
+      res.json(error);
+    }
   },
-  deleteFriend(req, res) {
-    User.findOneAndUpdate(
-      { _id: req.params.userId },
-      { $pull: { friends: req.params.friendId } },
-      { new: true }
-    )
-      .then((dbUserData) => {
-        if (!dbUserData) {
-          res.status(404).json({ message: "No user found with this id" });
-          return;
-        }
-        res.status(200).json(dbUserData);
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json(err);
+
+  deleteFriend: async (req, res) => {
+    const { userId, friendId } = req.params;
+    try {
+      const user1 = await User.findOneAndUpdate(
+        { _id: userId },
+        { $pull: { friends: friendId } },
+        { new: true }
+      ).populate({
+        path: "friends",
+        select: "-__v",
       });
+      const user2 = await User.findOneAndUpdate(
+        { _id: friendId },
+        { $pull: { friends: userId } },
+        { new: true, runValidators: true }
+      )
+        .populate({
+          path: "friends",
+          select: "-__v",
+        })
+
+        .select("-__v")
+        .then((userData) => {
+          if (!userData) {
+            res.status(404).json({ message: "No User found with this id!" });
+            return;
+          }
+          res.json(userData);
+        });
+    } catch (error) {
+      res.json(error);
+    }
   },
 };

@@ -21,27 +21,28 @@ module.exports = {
 				res.status(400).json(err);
 			});
 	},
-    createThought(req, res) {
-		Thought.create(req.body)
+    createThought: async (req, res) => {
+		const { thoughtText, username, userId } = req.body;
+		try {
+		  const newThought = await Thought.create({
+			thoughtText,
+			username,
+			userId,
+		  })
 			.then(({ _id }) => {
-				return User.findOneAndUpdate(
-					{ _id: req.body.userId },
-					{ $push: { thoughts: _id } },
-					{ new: true }
-				);
+			  return User.findOneAndUpdate(
+				{ _id: userId },
+				{ $push: { thoughts: _id } },
+				{ new: true, runValidators: true }
+			  );
 			})
-			.then((dbUserData) => {
-				if (!dbUserData) {
-					res.status(404).json({ message: "No user found with this id" });
-					return;
-				}
-				res.status(200).json(dbUserData);
-			})
-			.catch((err) => {
-				console.log(err);
-				res.status(400).json(err);
+			.then((thoughtData) => {
+			  res.json(thoughtData);
 			});
-	},
+		} catch (error) {
+		  console.log(error);
+		}
+	  },
     updateThoughtById(req, res) {
         Thought.findOneAndUpdate(
             { _id: req.params.thoughtId },
