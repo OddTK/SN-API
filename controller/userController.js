@@ -43,34 +43,30 @@ module.exports = {
       res.json(error);
     }
   },
-  updateUserById(req, res) {
-    User.findOneAndUpdate(
-      {
-        _id: req.params.userId,
-      },
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-      .then((dbUserData) => {
-        if (!dbUserData) {
-          res.status(404).json({ message: "No user found with this id" });
-          return;
+  updateUserById: async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { ...req.body },
+        {
+          new: true,
+          runValidators: true,
         }
-        res.status(200).json(dbUserData);
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json(err);
-      });
+      );
+      res.json(updatedUser);
+    } catch (error) {
+      res.json(error);
+    }
   },
-  deleteUserById(req, res) {
+  deleteUserById: async (req, res) => {
     const { userId } = req.params;
 
     try {
-      const deletedUser = User.findByIdAndDelete(userId);
+      const deleteUserThoughts = await Thought.deleteMany({
+        userId: userId,
+      });
+      const deletedUser = await User.findByIdAndDelete(userId);
       res.json(deletedUser);
     } catch (error) {
       res.json(error);
